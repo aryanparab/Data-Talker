@@ -7,7 +7,7 @@ from langchain_core.tools import tool
 
 load_dotenv()
 
-DB_PATH = os.getenv("DB_PATH")
+DB_PATH = os.getenv("DB_PATH") or os.path.join(os.path.dirname(__file__), "salesdata.db")
 
 @tool
 def list_tables():
