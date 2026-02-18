@@ -1,0 +1,7 @@
+.zencoder/
+.zenflow/
+bot/
+torch_env/
+
+.env
+
