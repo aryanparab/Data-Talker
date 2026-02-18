@@ -88,7 +88,7 @@ def run_query(sql: str) -> str:
     """
     # safety guard — only SELECT
     cleaned = sql.strip().upper()
-    if not cleaned.startswith("SELECT"):
+    if not cleaned.startswith("SELECT") and not cleaned.startswith("WITH") and not cleaned.startswith("COALESCE"):
         return "ERROR: Only SELECT queries are allowed."
 
     try:
@@ -266,15 +266,15 @@ ASK for clarification if ALL of these are true:
 
 DON'T ASK if ANY of these are true:
 - Aggregation implied: "total", "all", "sum" → sum across all contexts
-- Context specified: "Alex Smith under Skyler Miller" → use that context
+- Context specified: "Alex Smith under [manager name]" → use that context
 - Breakdown requested: "by manager", "per agency" → show all with grouping
 - Comparison requested: "compare" → show all contexts
 - Only one context exists for this entity
 
 When clarifying, provide numbered options:
 "I found Alex Smith under multiple managers. Which would you like?
-1. Under Skyler Miller at Summit Group
-2. Under Morgan Johnson at Summit Group  
+1. Under [actual manager 1] at [actual agency 1]
+2. Under [actual manager 2] at [actual agency 2]
 3. Total across all managers"
 
 """
@@ -812,7 +812,7 @@ Which would you like?
 ```json
 {{
   "needs_clarification": true,
-  "clarification_question": "I found Alex Smith in multiple contexts:\\n1. Under Skyler Miller at Summit Group\\n2. Under Morgan Johnson at Summit Group\\n3. Total across all contexts\\n\\nWhich would you like?"
+  "clarification_question": "I found Alex Smith in multiple contexts:\\n1. Under [actual manager 1] at [actual agency 1]\\n2. Under [actual manager 2] at [actual agency 2]\\n3. Total across all contexts\\n\\nWhich would you like?"
 }}
 ```
 
@@ -927,7 +927,7 @@ Output:
   "needs_db": true,
   "tables": ["agent_commissions"],
   "needs_clarification": true,
-  "clarification_question": "I found Alex Smith in multiple contexts:\\n1. Under Skyler Miller at Summit Group\\n2. Under Morgan Johnson at Summit Group\\n3. Total across all contexts\\n\\nWhich would you like?",
+  "clarification_question": "I found Alex Smith in multiple contexts:\\n1. Under [actual manager 1] at [actual agency 1]\\n2. Under [actual manager 2] at [actual agency 2]\\n3. Total across all contexts\\n\\nWhich would you like?",
   "notes": "Check actual data to verify multiple contexts"
 }}
 
@@ -935,30 +935,30 @@ Output:
 
 Conversation:
 - User: "Commissions for Alex Smith"
-- Assistant: "Which Alex? 1) Under Skyler Miller 2) Under Morgan Johnson 3) Total"
+- Assistant: "Which Alex? 1) Under [manager 1] 2) Under [manager 2] 3) Total"
 - User: "option 1"
 
 Step 1: Check history → Previous message has clarification with options!
   User said: "option 1"
-  My option 1 was: "Under Skyler Miller at Summit Group"
+  My option 1 was: whatever was listed first in my clarification_question
   
-  Resolve: upline_manager = "Skyler Miller", agency_name = "Summit Group"
+  Resolve: upline_manager and agency_name from that option
 
 Step 2-5: [Build plan with resolved context]
 Step 6: Clarification → Already resolved! Set needs_clarification = false
 
 Output:
 {{
-  "reasoning": "User selected option 1 = Alex Smith under Skyler Miller at Summit Group.",
+  "reasoning": "User selected option 1 — resolved to the first context from CONTEXT CHECK RESULTS.",
   "intent": "clarification_response",
   "domain": "agent",
   "needs_db": true,
   "tables": ["agent_commissions"],
-  "conditions": ["WHERE agent_name = 'Alex Smith'", "AND upline_manager = 'Skyler Miller'", "AND agency_name = 'Summit Group'"],
+  "conditions": ["WHERE agent_name = 'Alex Smith'", "AND upline_manager = '[actual manager]'", "AND agency_name = '[actual agency]'"],
   "select_columns": ["SUM of all monthly commission columns as total"],
-  "logic_summary": "Sum all commissions for Alex Smith under Skyler Miller",
+  "logic_summary": "Sum all commissions for Alex Smith under the resolved manager",
   "needs_clarification": false,
-  "resolved_context": "Alex Smith under Skyler Miller at Summit Group",
+  "resolved_context": "Alex Smith under [actual manager] at [actual agency]",
   "notes": "Monthly columns like '2024-01-01' need double quotes in SQL"
 }}
 

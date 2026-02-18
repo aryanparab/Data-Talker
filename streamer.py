@@ -26,15 +26,14 @@ EXECUTOR_SYSTEM = agent_tools.get_execution_prompt()
 CHART_DIR = "charts"
 os.makedirs(CHART_DIR, exist_ok=True)
 
-# ── Pre-flight context check ─────────────────────────────────────────────────
+# ── Pre-flight context check ──────────────────────────────────────────────────
 def get_agent_context(user_input: str, tool_map: dict, llm) -> str:
     """
-    Before planning, extract any agent/person name from the question and run
-    a real DB lookup to find their upline managers and agencies.
-    This result is injected into the planner prompt so it never has to guess.
+    Extract any agent/person name from the question and run a real DB lookup
+    to find their upline managers and agencies. Only returns data when multiple
+    contexts exist. Injected into the planner so it never has to guess.
     """
     try:
-        from langchain_core.messages import SystemMessage, HumanMessage
         name_response = llm.invoke([
             SystemMessage(content=(
                 "Extract a person or agent name from this question. "
@@ -48,20 +47,15 @@ def get_agent_context(user_input: str, tool_map: dict, llm) -> str:
         if not name or name.upper() == "NONE" or len(name) > 60:
             return ""
 
-        # Query both tables — agent_commissions for DS-2, salesperson for DS-1
         result = tool_map["run_query"].invoke({
-            "sql": f"""
-                SELECT DISTINCT upline_manager, agency_name
-                FROM agent_commissions
-                WHERE agent_name = '{name}'
-            """
+            "sql": f"SELECT DISTINCT upline_manager, agency_name FROM agent_commissions WHERE agent_name = '{name}'"
         })
 
         if result.startswith("ERROR") or not result.strip():
             return ""
 
+        # Only inject if multiple contexts found (header + more than 1 data row)
         lines = [l for l in result.strip().split("\n") if l.strip()]
-        # Only inject if multiple contexts exist (more than header + 1 data row)
         if len(lines) <= 2:
             return ""
 
@@ -79,12 +73,6 @@ if "messages" not in st.session_state:
 if "conversation_history" not in st.session_state:
     st.session_state.conversation_history = []
 
-if "waiting_for_clarification" not in st.session_state:
-    st.session_state.waiting_for_clarification = False
-
-if "current_plan" not in st.session_state:
-    st.session_state.current_plan = None
-
 # Load models once — executor is always Groq (needs bind_tools)
 if "executor_llm" not in st.session_state:
     st.session_state.executor_llm   = agents.load_llm("executor")
@@ -95,7 +83,6 @@ if "executor_llm" not in st.session_state:
     st.session_state.schemas  = agents._schemas()
     st.session_state.tool_map = agent_tools.get_tools()[0]
 
-    # Pre-extract table names from live schema
     st.session_state.table_names = [
         line.replace("TABLE:", "").strip()
         for line in st.session_state.schemas.splitlines()
@@ -123,14 +110,12 @@ with st.sidebar:
                     os.remove(msg["graph_path"])
             st.session_state.messages = []
             st.session_state.conversation_history = []
-            st.session_state.waiting_for_clarification = False
-            st.session_state.current_plan = None
             st.rerun()
     with col2:
         if st.button("🔄 Refresh", use_container_width=True):
             st.rerun()
 
-    # Visualize Latest button — only shown when there is a result without a chart
+    # Visualize Latest — only shown when latest result has no chart yet
     latest_result_idx = None
     for idx in range(len(st.session_state.messages) - 1, -1, -1):
         msg = st.session_state.messages[idx]
@@ -219,12 +204,10 @@ for idx, message in enumerate(st.session_state.messages):
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-        # Render saved SQL query
         if "executed_sql" in message:
             with st.expander("🔍 SQL Executed", expanded=False):
                 st.code(message["executed_sql"], language="sql")
 
-        # Render saved chart
         if "graph_path" in message and os.path.exists(message["graph_path"]):
             col1, col2 = st.columns([4, 1])
             with col1:
@@ -247,107 +230,115 @@ else:
     prompt = st.chat_input("Ask a question about your database...")
 
 if prompt:
+    # Add to messages and conversation history
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # ── Build conversation history ────────────────────────────────────────────
-    if st.session_state.waiting_for_clarification:
-        st.session_state.conversation_history.append(f"User: {prompt}")
-        st.session_state.waiting_for_clarification = False
-        user_input = st.session_state.get("clarification_original_question", prompt)
-        st.session_state.pop("clarification_original_question", None)
-    else:
-        st.session_state.conversation_history.append(f"User: {prompt}")
-        if len(st.session_state.conversation_history) > 10:
-            st.session_state.conversation_history = st.session_state.conversation_history[-10:]
-        user_input = prompt
+    # Always append to conversation history — the planner reads it naturally
+    st.session_state.conversation_history.append(f"User: {prompt}")
+    if len(st.session_state.conversation_history) > 10:
+        st.session_state.conversation_history = st.session_state.conversation_history[-10:]
 
-    # ── Agent loop ────────────────────────────────────────────────────────────
-    for clarification_round in range(MAX_TOOL_ROUNDS):
+    user_input = prompt
 
-        with st.chat_message("assistant"):
-            status_box     = st.container()
-            resp_holder    = st.empty()
-            query_result   = None
-            executed_sql   = None
-            final_response = ""
+    with st.chat_message("assistant"):
+        status_box     = st.container()
+        resp_holder    = st.empty()
+        query_result   = None
+        executed_sql   = None
+        final_response = ""
 
-            # ── Planning ──────────────────────────────────────────────────
-            with status_box:
-                with st.status("🧠 Planning query...", expanded=True) as status:
-                    st.write("📋 Analyzing question...")
-                    # Run pre-flight context check before planning
+        # ── Planning ──────────────────────────────────────────────────────
+        with status_box:
+            with st.status("🧠 Planning query...", expanded=True) as status:
+                st.write("📋 Analyzing question...")
+
+                # Pre-flight: look up real agent context before planner runs
+                # Skip the DB lookup if this looks like a clarification answer
+                # (single word/number — no need to query the DB)
+                is_clarification_answer = len(user_input.strip().split()) <= 3
+                if is_clarification_answer:
+                    context_check = ""
+                else:
                     context_check = get_agent_context(
                         user_input,
                         st.session_state.tool_map,
                         st.session_state.executor_llm,
                     )
-                    plan = agents.get_plan(user_input, st.session_state.conversation_history, context_check)
-                    st.write(f"✅ Tables: {', '.join(plan.get('tables', [])) or 'none'}")
-                    with st.expander("🔍 Query Plan"):
-                        st.json(plan)
-                    status.update(label="✅ Plan ready", state="complete", expanded=False)
 
-            # ── No DB needed (chitchat / greetings) ───────────────────────
-            if not plan.get("needs_db", True):
-                with status_box:
-                    with st.status("💭 Responding...", expanded=False):
-                        chitchat_response = st.session_state.executor_llm.invoke([
-                            SystemMessage(content="You are a helpful data assistant."),
-                            HumanMessage(content=user_input),
-                        ])
-                        final_response = chitchat_response.content
-                resp_holder.markdown(final_response)
-                st.session_state.messages.append({"role": "assistant", "content": final_response})
-                break
+                plan = agents.get_plan(
+                    user_input,
+                    st.session_state.conversation_history,
+                    context_check,
+                )
+                st.write(f"✅ Tables: {', '.join(plan.get('tables', [])) or 'none'}")
+                with st.expander("🔍 Query Plan"):
+                    st.json(plan)
+                status.update(label="✅ Plan ready", state="complete", expanded=False)
 
-            # ── Describe schema ────────────────────────────────────────────
-            if plan.get("intent") == "describe_schema":
-                tables_to_describe = plan.get("tables") or st.session_state.table_names
-                schema_parts = []
+        # ── No DB needed (chitchat / greetings) ───────────────────────────
+        if not plan.get("needs_db", True):
+            with status_box:
+                with st.status("💭 Responding...", expanded=False):
+                    chitchat_response = st.session_state.executor_llm.invoke([
+                        SystemMessage(content="You are a helpful data assistant."),
+                        HumanMessage(content=user_input),
+                    ])
+                    final_response = chitchat_response.content
+            resp_holder.markdown(final_response)
+            st.session_state.messages.append({"role": "assistant", "content": final_response})
+            st.session_state.conversation_history.append(f"Assistant: {final_response[:200]}")
 
-                with status_box:
-                    with st.status("🔍 Fetching live schema...", expanded=True) as status:
-                        for tbl in tables_to_describe:
-                            st.write(f"  📄 Reading `{tbl}`...")
-                            schema_info = st.session_state.tool_map["get_schema"].invoke(
-                                {"table_name": tbl}
-                            )
-                            schema_parts.append(f"### {tbl}\n{schema_info}")
-                        status.update(label="✅ Schema loaded", state="complete", expanded=False)
+        # ── Describe schema ────────────────────────────────────────────────
+        elif plan.get("intent") == "describe_schema":
+            tables_to_describe = plan.get("tables") or st.session_state.table_names
+            schema_parts = []
 
-                combined = "\n\n".join(schema_parts)
+            with status_box:
+                with st.status("🔍 Fetching live schema...", expanded=True) as status:
+                    for tbl in tables_to_describe:
+                        st.write(f"  📄 Reading `{tbl}`...")
+                        schema_info = st.session_state.tool_map["get_schema"].invoke(
+                            {"table_name": tbl}
+                        )
+                        schema_parts.append(f"### {tbl}\n{schema_info}")
+                    status.update(label="✅ Schema loaded", state="complete", expanded=False)
 
-                with status_box:
-                    with st.status("✍️ Summarizing...", expanded=False):
-                        summary = st.session_state.executor_llm.invoke([
-                            SystemMessage(content=(
-                                "You are a helpful data assistant. "
-                                "Given raw schema and sample data, write a clear friendly description "
-                                "of what each table contains and what questions can be answered."
-                            )),
-                            HumanMessage(content=f"User asked: {user_input}\n\nLive schema info:\n\n{combined}"),
-                        ])
-                        final_response = summary.content
+            with status_box:
+                with st.status("✍️ Summarizing...", expanded=False):
+                    summary = st.session_state.executor_llm.invoke([
+                        SystemMessage(content=(
+                            "You are a helpful data assistant. "
+                            "Given raw schema and sample data, write a clear friendly description "
+                            "of what each table contains and what questions can be answered."
+                        )),
+                        HumanMessage(content=(
+                            f"User asked: {user_input}\n\n"
+                            f"Live schema info:\n\n{chr(10).join(schema_parts)}"
+                        )),
+                    ])
+                    final_response = summary.content
 
-                resp_holder.markdown(final_response)
-                st.session_state.messages.append({"role": "assistant", "content": final_response})
-                break
+            resp_holder.markdown(final_response)
+            st.session_state.messages.append({"role": "assistant", "content": final_response})
+            st.session_state.conversation_history.append(f"Assistant: {final_response[:200]}")
 
-            # ── Clarification needed ───────────────────────────────────────
-            if plan.get("needs_clarification"):
-                clarification  = plan["clarification_question"]
-                final_response = f"❓ **Clarification needed:**\n\n{clarification}"
-                resp_holder.markdown(final_response)
-                st.session_state.conversation_history.append(f"Agent: {clarification}")
-                st.session_state.waiting_for_clarification = True
-                st.session_state.current_plan = plan
-                st.session_state.clarification_original_question = user_input
-                st.session_state.messages.append({"role": "assistant", "content": final_response})
-                break
+        # ── Clarification needed ───────────────────────────────────────────
+        elif plan.get("needs_clarification"):
+            # Treat exactly like any other assistant response — no flags, no state
+            # The next user message naturally continues the conversation history
+            # and the planner resolves it in Step 1
+            final_response = f"❓ **Clarification needed:**\n\n{plan['clarification_question']}"
+            resp_holder.markdown(final_response)
+            st.session_state.messages.append({"role": "assistant", "content": final_response})
+            # Add to history so planner sees the clarification question on next turn
+            st.session_state.conversation_history.append(
+                f"Assistant: {plan['clarification_question']}"
+            )
 
-            # ── Execute query with Groq agentic executor ───────────────────
+        # ── Execute query ──────────────────────────────────────────────────
+        else:
             with status_box:
                 with st.status("⚙️ Executing with Groq...", expanded=True) as status:
                     st.write("🔨 Building SQL query...")
@@ -370,7 +361,7 @@ if prompt:
                             f"=== SCHEMAS ===\n{relevant_schema}\n\n"
                             f"=== QUERY PLAN ===\n{json.dumps(plan, indent=2)}\n\n"
                             f"=== CONVERSATION HISTORY ===\n"
-                            f"{' '.join(st.session_state.conversation_history)}\n\n"
+                            f"{chr(10).join(st.session_state.conversation_history)}\n\n"
                             f"=== USER QUESTION ===\n{user_input}\n\n"
                             "Write and run the SQL now using the run_query tool."
                         )),
@@ -386,25 +377,20 @@ if prompt:
                         if tool_messages:
                             for msg in tool_messages:
                                 content = msg.content
-
-                                # Capture the SQL from structured tool calls
+                                # Capture SQL from structured tool calls
                                 if hasattr(response, "tool_calls") and response.tool_calls:
                                     for call in response.tool_calls:
                                         if call["name"] == "run_query":
                                             executed_sql = call["args"].get("sql", "")
-
                                 # Capture query results (not schema lookups)
                                 if not content.startswith("ERROR") and "columns" not in content[:50]:
                                     query_result = content
 
                         if done:
                             final_response = response.content
-
-                            # Show the SQL that was executed
                             if executed_sql:
                                 with st.expander("🔍 SQL Executed", expanded=False):
                                     st.code(executed_sql, language="sql")
-
                             st.write("✅ Done!")
                             status.update(label="✅ Query completed", state="complete", expanded=False)
                             break
@@ -414,13 +400,12 @@ if prompt:
                         final_response = "⚠️ Too many steps — please rephrase your question."
                         status.update(label="⚠️ Incomplete", state="error")
 
-            # Guard against empty response
             if not final_response:
                 final_response = "⚠️ Something went wrong — please try again."
 
             resp_holder.markdown(final_response)
 
-            # Save message with query result and SQL for history rendering
+            # Save message
             message_data = {
                 "role": "assistant",
                 "content": final_response,
@@ -432,7 +417,7 @@ if prompt:
                 message_data["executed_sql"] = executed_sql
             st.session_state.messages.append(message_data)
 
-            # Add to conversation history (truncated to save tokens)
+            # Add to conversation history
             response_summary = final_response[:200] + "..." if len(final_response) > 200 else final_response
             st.session_state.conversation_history.append(f"Assistant: {response_summary}")
             if len(st.session_state.conversation_history) > 10:
@@ -467,8 +452,6 @@ if prompt:
                             st.error(f"❌ Chart failed: {exec_result['error']}")
                     else:
                         st.error(f"❌ {graph_result['error']}")
-
-        break  # exit clarification loop
 
 # ── Footer ────────────────────────────────────────────────────────────────────
 st.markdown("---")
