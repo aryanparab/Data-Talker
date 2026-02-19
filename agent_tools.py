@@ -582,24 +582,39 @@ Does it contain:
 If YES → User is likely answering my clarification!
 
 **Clarification Resolution Logic:**
+
+CRITICAL: Map the user's answer to the option AT THAT POSITION in the list.
+"Total" is ALWAYS the last option regardless of how many options there are.
+Do NOT assume any fixed number means "Total".
+
 ```
-My previous: "Which Alex Smith?
-              1. Under Manager A at Summit
-              2. Under Manager B at Peak
-              3. Total"
+My previous: "Which Skyler Williams?
+              1. Under Peyton Rodriguez at Vision Associates
+              2. Under Sam Martinez at Momentum Agency
+              3. Under Taylor Jones at Legacy Partners
+              4. Under Blake Davis at Legacy Partners
+              5. Total across all contexts"
 
 User says:        I resolve to:
-"option 1"    →  Manager A at Summit
-"1"           →  Manager A at Summit  
-"the first"   →  Manager A at Summit
-"manager A"   →  Manager A (extract from text)
-"summit"      →  Summit agency (extract from text)
-"total"       →  No filtering (aggregate all)
+"1"           →  Peyton Rodriguez, Vision Associates    (NOT Total)
+"2"           →  Sam Martinez, Momentum Agency          (NOT Total)
+"3"           →  Taylor Jones, Legacy Partners          (NOT Total)
+"4"           →  Blake Davis, Legacy Partners           (NOT Total)
+"5"           →  Total, no filtering                   (always last)
+"option 3"    →  Taylor Jones, Legacy Partners          (position 3)
+"taylor"      →  Taylor Jones (name match from list)
+"legacy"      →  Legacy Partners (agency match — but TWO managers have Legacy,
+                  so ask which Legacy Partners specifically)
+"total"       →  No filtering, aggregate all contexts
+"all"         →  No filtering, aggregate all contexts
 
 User says:        I do:
 "yes"         →  Unclear! Ask again with clearer options
 "no"          →  Unclear! Ask again
 ```
+
+RULE: Count the options in MY previous clarification_question, find position N,
+use that exact manager+agency. Never guess — read the list.
 
 If resolved → Build plan with that context, set needs_clarification = false
 If unclear → Ask clarification again with numbered choices
@@ -801,12 +816,17 @@ If you need clarification, provide numbered options:
 ```
 Template:
 I found [entity name] in multiple contexts:
-1. [Context 1 with SPECIFIC details: manager name, agency name]
-2. [Context 2 with SPECIFIC details: manager name, agency name]  
-3. Total across all contexts
+1. [Context 1: manager name, agency name]
+2. [Context 2: manager name, agency name]
+... (one line per context from CONTEXT CHECK RESULTS)
+N. Total across all contexts    ← always last, N = number of contexts + 1
 
 Which would you like?
 ```
+
+CRITICAL: List every distinct context from CONTEXT CHECK RESULTS as its own
+numbered option. "Total" is always the final option. Never hardcode 3 options
+if there are more or fewer contexts.
 
 **Example:**
 ```json

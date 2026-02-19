@@ -234,14 +234,28 @@ def generate_graph(data_result: str, user_request: str, conversation_context: li
         for msg in conversation_context[-5:]:  # Last 5 messages
             context_str += f"{msg}\n"
     
+    # Pre-parse column names so LLM knows exact shape before writing code
+    shape_info = ""
+    try:
+        import pandas as _pd
+        import io as _io
+        df_preview = _pd.read_csv(_io.StringIO(data_result), sep=r'\s+', engine='python')
+        shape_info = f"\nDATA SHAPE: {len(df_preview)} rows x {len(df_preview.columns)} columns"
+        shape_info += f"\nCOLUMN NAMES (use these exactly): {list(df_preview.columns)}"
+    except Exception:
+        pass
+
     prompt = f"""\
 USER REQUEST:
 {user_request}
-{context_str}
+{context_str}{shape_info}
+
 QUERY RESULTS:
 {data_result}
 
 Analyze the request and data, then generate visualization code as JSON.
+IMPORTANT: Use the exact column names from DATA SHAPE above.
+Do NOT rename or reassign df.columns — use the columns as they are.
 """
     
     messages = [
@@ -256,11 +270,8 @@ Analyze the request and data, then generate visualization code as JSON.
         result = clean_json_response(raw)
         result["success"] = True
         result["error"] = None
-        
-        # Ensure all expected fields exist
         result.setdefault("explicit_request", False)
         result.setdefault("title", "Data Visualization")
-        
         return result
     except Exception as e:
         return {
