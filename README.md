@@ -43,6 +43,28 @@ Browser: question + recent query context
   → validated result table + declarative SVG chart + executed SQL
 ```
 
+### Agentic workflow
+
+The [visual flowchart](https://data-talker-demo.onrender.com/#agent-flow) shows the planner and bounded repair loop. This is one model-driven planner with application-managed tools, not a collection of independent agents.
+
+```mermaid
+flowchart TD
+    Q[Question or follow-up] --> P[Request limits and entity check]
+    P -->|Ambiguous entity| C[Ask user for context]
+    C --> Q
+    P -->|Resolved| L[Groq planner]
+    G[Live schema, metric definitions, recent question/SQL context] --> L
+    L -->|Needs clarification| C
+    L --> V[SQLGlot validation and follow-up guard]
+    V -->|Valid| W[Separate read-only DuckDB worker]
+    V -->|Rejected| R[Planner repair: at most once]
+    W -->|Execution error| R
+    R --> V
+    R -->|Second failure| S[Stop and explain]
+    W -->|Rows| O[Table, validated SVG chart, SQL, assumptions]
+    E[Verified example: no model call] --> V
+```
+
 The planner can repair a rejected query once. It cannot change the database. The public runtime imports only `datatalker/`; the older Streamlit/LangChain experiments at the repository root are legacy code and are not deployed or dependencies of this app. Use the commands above rather than `streamer.py`.
 
 ## Deploy on Render

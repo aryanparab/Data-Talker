@@ -9,7 +9,7 @@
       content="Data Talker turns plain-English questions into inspectable SQL, charts, and answers. Explore a working conversational analytics demo built with FastAPI, DuckDB, and Groq."
     />
     <meta name="theme-color" content="#f5f6ef" />
-    <link rel="stylesheet" href="/assets/landing.css?v=2" />
+    <link rel="stylesheet" href="/assets/landing.css?v=4" />
     <link rel="stylesheet" href="/assets/previews.css" />
     <script src="/assets/previews.js" defer></script>
   </head>
@@ -228,6 +228,179 @@
             >
           </div>
         </div>
+      </section>
+      <section
+        class="agent-flow wrap"
+        id="agent-flow"
+        aria-labelledby="agent-flow-title"
+      >
+        <div class="section-marker">THE AGENTIC FLOW</div>
+        <h2 id="agent-flow-title">
+          One planner. <em>A bounded tool loop.</em>
+        </h2>
+        <p class="flow-intro">
+          The model proposes SQL. Application code checks it, executes it, and
+          returns evidence. A failed query can trigger one repair attempt.
+        </p>
+        <div
+          class="flow-scroll"
+          tabindex="0"
+          role="region"
+          aria-label="Agent flowchart; scroll horizontally on small screens"
+        >
+          <svg
+            viewBox="0 0 1120 640"
+            role="img"
+            aria-labelledby="flow-title flow-description"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <title id="flow-title">Data Talker agent workflow</title>
+            <desc id="flow-description">
+              A question passes request limits and an entity ambiguity check.
+              Ambiguous requests return to the user for clarification. The Groq
+              planner receives the live schema, business definitions, and recent
+              question and SQL context. SQLGlot and a follow-up check validate
+              the proposed query. Valid SQL runs in a separate read-only DuckDB
+              worker. A rejected query or execution error allows one planner
+              repair, followed by validation again. A second failure stops
+              safely. Results show a table, validated chart, SQL, and
+              assumptions. Reviewed examples skip the planner but use the same
+              validation and execution path.
+            </desc>
+            <defs>
+              <marker
+                id="flow-arrow"
+                viewBox="0 0 10 10"
+                refX="9"
+                refY="5"
+                markerWidth="6"
+                markerHeight="6"
+                orient="auto-start-reverse"
+              >
+                <path d="M0 0L10 5L0 10Z" fill="context-stroke" />
+              </marker>
+            </defs>
+            <g class="flow-edges" fill="none" marker-end="url(#flow-arrow)">
+              <path d="M230 82H285" />
+              <path d="M495 82H565" />
+              <path d="M775 82H840" />
+              <path class="flow-purple" d="M390 120V195" />
+              <path class="flow-purple flow-dashed" d="M285 232H130V120" />
+              <path class="flow-purple" d="M670 195V120" />
+              <path class="flow-green" d="M840 82H815V382H840" />
+              <path class="flow-purple" d="M945 120V195" />
+              <path
+                class="flow-purple flow-dashed"
+                d="M1050 232H1070V82H1050"
+              />
+              <path class="flow-red" d="M945 270V300H670V345" />
+              <path class="flow-purple flow-dashed" d="M945 345V325H820V232H840" />
+              <path class="flow-green" d="M945 420V505" />
+              <path d="M515 542H790V82H840" />
+            </g>
+            <g class="flow-labels">
+              <text x="247" y="67">request</text>
+              <text x="510" y="67">resolved</text>
+              <text x="405" y="161">ambiguous</text>
+              <text x="683" y="161">context</text>
+              <text x="800" y="151" text-anchor="end" class="flow-valid-text">
+                valid SQL
+              </text>
+              <text x="959" y="161">rejected</text>
+              <text x="1082" y="160" transform="rotate(90 1082 160)">
+                validate again
+              </text>
+              <text x="700" y="292" class="flow-stop-text">
+                second failure → stop
+              </text>
+              <text x="797" y="335" text-anchor="end">execution error</text>
+              <text x="960" y="464" class="flow-valid-text">executed rows</text>
+              <text x="540" y="529">reviewed SQL · no model call</text>
+            </g>
+            <g class="flow-node">
+              <rect x="30" y="45" width="200" height="75" />
+              <text x="48" y="72" class="flow-node-title">Your question</text>
+              <text x="48" y="94">Plain English or a follow-up</text>
+            </g>
+            <g class="flow-node">
+              <rect x="285" y="45" width="210" height="75" />
+              <text x="303" y="72" class="flow-node-title">
+                Preflight checks
+              </text>
+              <text x="303" y="94">Limits + entity ambiguity</text>
+            </g>
+            <g class="flow-node flow-model">
+              <rect x="565" y="45" width="210" height="75" />
+              <text x="583" y="72" class="flow-node-title">Groq planner</text>
+              <text x="583" y="94">SQL + chart specification</text>
+            </g>
+            <g class="flow-node">
+              <rect x="840" y="45" width="210" height="75" />
+              <text x="858" y="72" class="flow-node-title">
+                Validate the plan
+              </text>
+              <text x="858" y="94">SQLGlot + follow-up guard</text>
+            </g>
+            <g class="flow-node">
+              <rect x="285" y="195" width="210" height="75" />
+              <text x="303" y="222" class="flow-node-title">
+                Ask for clarification
+              </text>
+              <text x="303" y="244">User supplies missing context</text>
+            </g>
+            <g class="flow-node flow-context">
+              <rect x="565" y="195" width="210" height="75" />
+              <text x="583" y="222" class="flow-node-title">
+                Grounding context
+              </text>
+              <text x="583" y="241">Schema + metric definitions</text>
+              <text x="583" y="256">Recent questions + executed SQL</text>
+            </g>
+            <g class="flow-node flow-model">
+              <rect x="840" y="195" width="210" height="75" />
+              <text x="858" y="222" class="flow-node-title">
+                Planner repair
+              </text>
+              <text x="858" y="244">Query + error · one retry only</text>
+            </g>
+            <g class="flow-node flow-stop">
+              <rect x="565" y="345" width="210" height="75" />
+              <text x="583" y="372" class="flow-node-title">Stop safely</text>
+              <text x="583" y="394">Explain failure; invite a rephrase</text>
+            </g>
+            <g class="flow-node">
+              <rect x="840" y="345" width="210" height="75" />
+              <text x="858" y="372" class="flow-node-title">DuckDB worker</text>
+              <text x="858" y="391">Separate process · read-only</text>
+              <text x="858" y="406">Time, memory + output limits</text>
+            </g>
+            <g class="flow-node">
+              <rect x="305" y="505" width="210" height="75" />
+              <text x="323" y="532" class="flow-node-title">
+                Verified example
+              </text>
+              <text x="323" y="554">A reviewed query you select</text>
+            </g>
+            <g class="flow-node flow-result">
+              <rect x="840" y="505" width="210" height="75" />
+              <text x="858" y="532" class="flow-node-title">
+                Inspectable result
+              </text>
+              <text x="858" y="551">Table + validated SVG chart</text>
+              <text x="858" y="566">Executed SQL + assumptions</text>
+            </g>
+            <text x="30" y="620" class="flow-footer">
+              The planner can also request clarification when the question
+              cannot be resolved from the catalog.
+            </text>
+          </svg>
+        </div>
+        <p class="flow-caption">
+          <span class="flow-key purple-key">Planner &amp; repair</span
+          ><span class="flow-key green-key">Successful execution</span
+          ><span class="flow-key red-key">Safe stop</span
+          ><span>Follow-ups reuse up to six recent question/SQL pairs.</span>
+        </p>
       </section>
       <section class="demo-section wrap" id="demo">
         <div class="demo-copy">

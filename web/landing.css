@@ -1226,3 +1226,118 @@ summary:focus-visible {
     padding-bottom: 45px;
   }
 }
+.agent-flow {
+  padding-top: 65px;
+  padding-bottom: 65px;
+}
+.agent-flow h2 {
+  margin-top: 19px;
+}
+.flow-intro {
+  font-size: 12px;
+  color: #626262;
+  line-height: 1.8;
+  max-width: 660px;
+  margin: 18px 0 25px;
+}
+.flow-scroll {
+  border: 1px solid #e5e5e5;
+  border-radius: 7px;
+  overflow-x: auto;
+  background: #fff;
+}
+.flow-scroll svg {
+  width: 100%;
+  min-width: 950px;
+  display: block;
+}
+.flow-edges {
+  stroke: #b0b0b0;
+  stroke-width: 1.4;
+}
+.flow-edges .flow-purple {
+  stroke: #7545d9;
+}
+.flow-edges .flow-green {
+  stroke: #20834d;
+}
+.flow-edges .flow-red {
+  stroke: #c74343;
+}
+.flow-dashed {
+  stroke-dasharray: 5 4;
+}
+.flow-node rect {
+  fill: #fff;
+  stroke: #d4d4d4;
+  rx: 6;
+}
+.flow-node text {
+  fill: #737373;
+  font-size: 10px;
+}
+.flow-node .flow-node-title {
+  fill: #171717;
+  font-size: 13px;
+  font-weight: 550;
+}
+.flow-model rect {
+  stroke: #7545d9;
+}
+.flow-context rect {
+  fill: #fafafa;
+  stroke-dasharray: 4 3;
+}
+.flow-stop rect {
+  stroke: #c74343;
+}
+.flow-result rect {
+  stroke: #20834d;
+}
+.flow-labels text,
+.flow-footer {
+  fill: #737373;
+  font-size: 9px;
+}
+.flow-labels .flow-valid-text {
+  fill: #20834d;
+}
+.flow-labels .flow-stop-text {
+  fill: #b13232;
+}
+.flow-caption {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  font-size: 9px;
+  line-height: 1.8;
+  color: #737373;
+}
+.flow-key:before {
+  content: "";
+  display: inline-block;
+  width: 16px;
+  height: 2px;
+  background: currentColor;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+.purple-key {
+  color: #7545d9;
+}
+.green-key {
+  color: #20834d;
+}
+.red-key {
+  color: #b13232;
+}
+.flow-scroll:focus-visible {
+  outline: 2px solid #7545d9;
+  outline-offset: 3px;
+}
+@media (max-width: 760px) {
+  .agent-flow {
+    padding-top: 45px;
+    padding-bottom: 45px;
+  }
+}

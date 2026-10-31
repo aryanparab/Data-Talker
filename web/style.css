@@ -867,3 +867,9 @@ a:focus-visible,
 summary:focus-visible {
   outline-color: #7545d9;
 }
+.flow-nav-link {
+  color: #7545d9;
+  margin-left: 20px;
+  font-size: 10px;
+  white-space: nowrap;
+}
