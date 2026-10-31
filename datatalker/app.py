@@ -56,6 +56,11 @@ async def headers(request, call_next):
 
 @app.get("/")
 async def index():
+    return FileResponse(ROOT / "web/landing.html")
+
+
+@app.get("/app")
+async def workspace():
     return FileResponse(ROOT / "web/index.html")
 
 

@@ -30,7 +30,7 @@ python -m datatalker.demo
 uvicorn datatalker.app:app --host 127.0.0.1 --port 8070
 ```
 
-Open <http://localhost:8070>. Verified examples work without a model key. `GROQ_MODEL` selects a model available to your Groq account; the default is `openai/gpt-oss-120b`.
+Open <http://localhost:8070> for the project landing page or <http://localhost:8070/app> for the analytics workspace. Verified examples work without a model key. `GROQ_MODEL` selects a model available to your Groq account; the default is `openai/gpt-oss-120b`.
 
 ## Architecture
 
