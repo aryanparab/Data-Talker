@@ -1,0 +1,11 @@
+# Allowlist: the private workbook, old DB, .env, git history and legacy code
+# are never sent to the image build context.
+**
+!Dockerfile
+!.dockerignore
+!requirements-web.txt
+!datatalker/
+!datatalker/**
+!web/
+!web/**
+datatalker/__pycache__/

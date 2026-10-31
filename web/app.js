@@ -1,0 +1,294 @@
+const $ = (s) => document.querySelector(s);
+const el = (tag, cls, text) => {
+  const node = document.createElement(tag);
+  if (cls) node.className = cls;
+  if (text !== undefined) node.textContent = text;
+  return node;
+};
+let history = [];
+let busy = false;
+let catalog;
+try {
+  history = JSON.parse(sessionStorage.getItem("dt-history") || "[]");
+  if (!Array.isArray(history)) history = [];
+  history = history.slice(-6);
+} catch {}
+function statusError(message) {
+  const n = el("div", "error", message);
+  $("#conversation").append(n);
+  return n;
+}
+function setBusy(value) {
+  busy = value;
+  $("#send").disabled = value;
+  document.querySelectorAll(".example").forEach((b) => (b.disabled = value));
+}
+async function api(path, body) {
+  const r = await fetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body || {}),
+  });
+  const d = await r.json();
+  if (!r.ok)
+    throw Error(
+      typeof d.detail === "string"
+        ? d.detail
+        : "The request could not be completed. Please try again.",
+    );
+  return d;
+}
+function format(value) {
+  if (value === null) return "NULL";
+  if (typeof value === "number")
+    return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(
+      value,
+    );
+  return String(value);
+}
+function plot(result) {
+  if (!result.chart || result.rows.length < 2) return null;
+  const { type, x, y } = result.chart;
+  const xi = result.columns.findIndex((c) => c.name === x),
+    yi = result.columns.findIndex((c) => c.name === y);
+  const rows = result.rows.filter((r) => typeof r[yi] === "number");
+  if (!rows.length) return null;
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("viewBox", "0 0 700 235");
+  svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", `${y} by ${x}`);
+  const make = (tag, attrs, text) => {
+    const n = document.createElementNS(ns, tag);
+    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+    if (text !== undefined) n.textContent = text;
+    svg.append(n);
+    return n;
+  };
+  const max = Math.max(...rows.map((r) => r[yi]), 0),
+    min = Math.min(...rows.map((r) => r[yi]), 0),
+    range = max - min || 1,
+    zero = 185 - ((0 - min) / range) * 155;
+  make("line", { x1: 55, y1: zero, x2: 685, y2: zero, stroke: "#e5e5e5" });
+  make("text", { x: 48, y: 20, "text-anchor": "end" }, format(max));
+  make("text", { x: 48, y: 194, "text-anchor": "end" }, "0");
+  const step = 620 / rows.length;
+  const points = [];
+  rows.forEach((r, i) => {
+    const px = 60 + (i + 0.5) * step,
+      py = 185 - ((r[yi] - min) / range) * 155;
+    points.push(`${px},${py}`);
+    if (type === "bar")
+      make("rect", {
+        x: px - step * 0.32,
+        y: Math.min(py, zero),
+        width: step * 0.64,
+        height: Math.abs(zero - py),
+        rx: 3,
+        fill: "#262626",
+      });
+    else make("circle", { cx: px, cy: py, r: 3.5, fill: "#7545d9" });
+    if (rows.length <= 8 || i % Math.ceil(rows.length / 6) === 0)
+      make(
+        "text",
+        { x: px, y: 209, "text-anchor": "middle" },
+        String(r[xi]).replace("T00:00:00", "").slice(0, 18),
+      );
+  });
+  if (type === "line")
+    make("polyline", {
+      points: points.join(" "),
+      fill: "none",
+      stroke: "#7545d9",
+      "stroke-width": 2,
+    });
+  const wrap = el("div", "chart");
+  wrap.append(svg);
+  return wrap;
+}
+function render(data) {
+  const container = $("#conversation");
+  if (data.clarification) {
+    const card = el("div", "result-card clarification");
+    card.append(el("p", "", data.clarification));
+    if (data.choices) {
+      const list = el("ul");
+      data.choices.forEach((c) => list.append(el("li", "", c)));
+      card.append(list);
+    }
+    container.append(card);
+    return;
+  }
+  const card = el("article", "result-card");
+  const head = el("div", "result-head");
+  head.append(el("h3", "", data.title), el("span", "mode", data.mode));
+  card.append(head, el("p", "answer", data.answer));
+  if (data.explanation) card.append(el("p", "explanation", data.explanation));
+  const chart = plot(data);
+  if (chart) card.append(chart);
+  const scroll = el("div", "table-scroll");
+  const table = el("table");
+  const thead = el("thead"),
+    tr = el("tr");
+  data.columns.forEach((c) => tr.append(el("th", "", c.name)));
+  thead.append(tr);
+  table.append(thead);
+  const tbody = el("tbody");
+  data.rows.forEach((row) => {
+    const tr = el("tr");
+    row.forEach((v) =>
+      tr.append(el("td", typeof v === "number" ? "numeric" : "", format(v))),
+    );
+    tbody.append(tr);
+  });
+  table.append(tbody);
+  scroll.append(table);
+  card.append(scroll);
+  if (!data.rows.length)
+    card.append(el("p", "answer", "No rows matched this query."));
+  if (data.truncated)
+    card.append(
+      el(
+        "p",
+        "answer",
+        "Display limit reached. These rows are a subset of the result; refine the question or aggregate it.",
+      ),
+    );
+  if (data.assumptions?.length) {
+    const a = el("div", "assumptions");
+    a.append(el("strong", "", "Scope & assumptions"));
+    data.assumptions.forEach((v) => a.append(el("p", "", v)));
+    card.append(a);
+  }
+  const details = el("details", "sql-details");
+  details.append(
+    el("summary", "", "Inspect executed SQL"),
+    el("pre", "", data.sql),
+  );
+  card.append(details);
+  const foot = el("div", "result-foot");
+  foot.append(
+    el(
+      "span",
+      "",
+      `${data.rows.length} displayed rows · ${(data.latency_ms / 1000).toFixed(1)}s · read-only`,
+    ),
+    el(
+      "span",
+      "",
+      `${data.model_calls} model calls${data.tokens ? " · " + data.tokens.toLocaleString() + " tokens" : ""}`,
+    ),
+  );
+  card.append(foot);
+  container.append(card);
+  history.push({ question: data.question, sql: data.sql });
+  history = history.slice(-6);
+  sessionStorage.setItem("dt-history", JSON.stringify(history));
+}
+async function run(question, example) {
+  if (busy) return;
+  setBusy(true);
+  $("#conversation").append(el("div", "question-bubble", question));
+  const loading = el(
+    "div",
+    "loading",
+    example
+      ? "Running reviewed SQL…"
+      : "Reading the catalog, building a query, checking the result…",
+  );
+  $("#conversation").append(loading);
+  loading.scrollIntoView({ behavior: "smooth", block: "center" });
+  try {
+    const data = await api(
+      example ? "/api/examples/" + encodeURIComponent(example) : "/api/query",
+      example
+        ? {}
+        : { question, history: $("#follow-up").checked ? history : [] },
+    );
+    render(data);
+    $("#question").value = "";
+  } catch (e) {
+    statusError(
+      e instanceof TypeError
+        ? "Connection interrupted. Please retry in a moment; the free service may be waking up."
+        : e.message || "The request could not be completed. Please try again.",
+    );
+  } finally {
+    loading.remove();
+    setBusy(false);
+  }
+}
+$("#query-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const question = $("#question").value.trim();
+  if (question.length >= 2) run(question);
+});
+$("#question").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    $("#query-form").requestSubmit();
+  }
+});
+$("#clear").onclick = () => {
+  if (busy) return;
+  history = [];
+  sessionStorage.removeItem("dt-history");
+  $("#conversation").replaceChildren();
+  $("#question").focus();
+};
+$("#definitions").onclick = () => $("#definition-dialog").showModal();
+$("#close-dialog").onclick = () => $("#definition-dialog").close();
+async function init() {
+  try {
+    const r = await fetch("/api/catalog");
+    if (!r.ok) throw Error();
+    catalog = await r.json();
+    $("#dataset-title").textContent = catalog.title;
+    const tables = Object.entries(catalog.tables);
+    $("#dataset-meta").textContent =
+      `${tables.length} tables · ${tables.reduce((s, [, t]) => s + t.rows, 0).toLocaleString()} rows`;
+    tables.forEach(([name, data]) => {
+      const d = el("details", "table-item"),
+        summary = el("summary", "table-title");
+      summary.append(
+        el("span", "", "▦"),
+        el("span", "", name),
+        el("small", "", data.rows.toLocaleString()),
+      );
+      d.append(summary);
+      const cols = el("div", "columns");
+      Object.entries(data.columns).forEach(([name, type]) => {
+        const row = el("div", "", name);
+        row.append(el("span", "", type));
+        cols.append(row);
+      });
+      d.append(cols);
+      $("#tables").append(d);
+    });
+    const icons = ["↗", "⌁", "≡", "◈"];
+    catalog.examples.forEach((item, i) => {
+      const b = el("button", "example");
+      b.type = "button";
+      const copy = el("span");
+      copy.append(el("strong", "", item.title), el("small", "", item.question));
+      b.append(
+        el("span", "symbol", icons[i % 4]),
+        copy,
+        el("span", "arrow", "↗"),
+      );
+      b.onclick = () => run(item.question, item.id);
+      $("#examples").append(b);
+    });
+    catalog.definitions.forEach((d) =>
+      $("#definition-list").append(
+        el("p", "", typeof d === "string" ? d : d.term + ": " + d.definition),
+      ),
+    );
+    $("#definition-list").append(el("p", "", catalog.provenance));
+  } catch {
+    statusError(
+      "The dataset is waking up or unavailable. Refresh in a moment.",
+    );
+  }
+}
+init();
