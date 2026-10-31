@@ -1,1 +1,117 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Data Talker — Questions into evidence</title><link rel="stylesheet" href="/assets/style.css"><script src="/assets/app.js" defer></script></head><body><aside class="sidebar"><a class="brand" href="/" aria-label="Data Talker home"><span class="logo">d<span>t</span></span>Data Talker<span class="beta">LAB</span></a><div class="workspace"><span class="dot"></span><span>Northstar workspace</span><span class="tag">DEMO</span></div><p class="section-label">YOUR DATA</p><div id="tables" class="tables"></div><button id="definitions" class="subtle">↗ Metric definitions</button><div class="side-bottom"><div class="security-icon">◇</div><strong>Answers you can inspect.</strong><p>Synthetic data. Read-only queries.<br>Visible SQL, every time.</p><a href="https://github.com/aryanparab/Data-Talker" target="_blank" rel="noopener">View the source ↗</a></div></aside><main><header><span>Workspace <span class="slash">/</span> <b>Explore</b></span><span class="system"><span class="dot"></span>Read-only connection</span></header><section class="intro"><div class="eyebrow">CONVERSATIONAL ANALYTICS</div><h1>Ask a question.<br><span>Follow the evidence.</span></h1><p>Explore sales, eligibility, and commissions in plain English.<br>See the calculation, the SQL, and the data behind every answer.</p><div class="dataset"><span class="dataset-symbol">▦</span><div><strong id="dataset-title">Northstar Sales</strong><span id="dataset-meta">Connecting to the demo dataset…</span></div><span class="dataset-badge">SYNTHETIC DATA</span></div></section><section class="starter" aria-label="Verified examples"><div class="section-heading"><h2>A good place to start</h2><span>Reviewed SQL · no model calls</span></div><div id="examples" class="examples"></div></section><section id="conversation" aria-live="polite"></section><section class="composer-section"><form id="query-form"><label for="question">What would you like to know?</label><div class="input-row"><textarea id="question" rows="2" maxlength="1200" placeholder="Compare eligible and ineligible revenue…" required minlength="2"></textarea><button id="send" type="submit" aria-label="Run question">Ask <span>↗</span></button></div><div class="composer-footer"><span>Follow-up questions keep your recent query context.</span><button type="button" id="clear">Clear session</button></div></form><p class="privacy">Live questions, recent query context, and the synthetic catalog are sent to Groq. AI can make mistakes; inspect the SQL. This free demo may take a moment to wake up.</p></section><footer><span>Built for questions that deserve more than a guess.</span><a href="https://github.com/aryanparab/Data-Talker" target="_blank" rel="noopener">GitHub ↗</a></footer></main><dialog id="definition-dialog"><div class="dialog-head"><h2>How the metrics work</h2><button id="close-dialog" aria-label="Close definitions">×</button></div><p>These definitions are supplied to the model alongside the current schema.</p><div id="definition-list"></div></dialog></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Data Talker — Questions into evidence</title>
+    <link rel="stylesheet" href="/assets/style.css" />
+    <script src="/assets/app.js" defer></script>
+  </head>
+  <body>
+    <aside class="sidebar">
+      <a class="brand" href="/" aria-label="Data Talker home"
+        ><span class="logo">d<span>t</span></span
+        >Data Talker<span class="beta">LAB</span></a
+      >
+      <div class="workspace">
+        <span class="dot"></span><span>Northstar workspace</span
+        ><span class="tag">DEMO</span>
+      </div>
+      <p class="section-label">YOUR DATA</p>
+      <div id="tables" class="tables"></div>
+      <button id="definitions" class="subtle">↗ Metric definitions</button>
+      <div class="side-bottom">
+        <div class="security-icon">◇</div>
+        <strong>Answers you can inspect.</strong>
+        <p>Synthetic data. Read-only queries.<br />Visible SQL, every time.</p>
+        <a
+          href="https://github.com/aryanparab/Data-Talker"
+          target="_blank"
+          rel="noopener"
+          >View the source ↗</a
+        >
+      </div>
+    </aside>
+    <main>
+      <header>
+        <span>Workspace <span class="slash">/</span> <b>Explore</b></span
+        ><span class="system"
+          ><span class="dot"></span>Read-only connection</span
+        >
+      </header>
+      <section class="intro">
+        <div class="eyebrow">CONVERSATIONAL ANALYTICS</div>
+        <h1>Ask a question.<br /><span>Follow the evidence.</span></h1>
+        <p>
+          Explore sales, eligibility, and commissions in plain English.<br />See
+          the calculation, the SQL, and the data behind every answer.
+        </p>
+        <div class="dataset">
+          <span class="dataset-symbol">▦</span>
+          <div>
+            <strong id="dataset-title">Northstar Sales</strong
+            ><span id="dataset-meta">Connecting to the demo dataset…</span>
+          </div>
+          <span class="dataset-badge">SYNTHETIC DATA</span>
+        </div>
+      </section>
+      <section class="starter" aria-label="Verified examples">
+        <div class="section-heading">
+          <h2>A good place to start</h2>
+          <span>Reviewed SQL · no model calls</span>
+        </div>
+        <div id="examples" class="examples"></div>
+      </section>
+      <section id="conversation" aria-live="polite"></section>
+      <section class="composer-section">
+        <form id="query-form">
+          <label for="question">What would you like to know?</label>
+          <div class="input-row">
+            <textarea
+              id="question"
+              rows="2"
+              maxlength="1200"
+              placeholder="Compare eligible and ineligible revenue…"
+              required
+              minlength="2"
+            ></textarea
+            ><button id="send" type="submit" aria-label="Run question">
+              Ask <span>↗</span>
+            </button>
+          </div>
+          <div class="composer-footer">
+            <label class="followup-label"
+              ><input type="checkbox" id="follow-up" checked /> Continue the
+              previous query</label
+            ><button type="button" id="clear">Clear session</button>
+          </div>
+        </form>
+        <p class="privacy">
+          Live questions, recent query context, and the synthetic catalog are
+          sent to Groq. AI can make mistakes; inspect the SQL. This free demo
+          may take a moment to wake up.
+        </p>
+      </section>
+      <footer>
+        <span>Built for questions that deserve more than a guess.</span
+        ><a
+          href="https://github.com/aryanparab/Data-Talker"
+          target="_blank"
+          rel="noopener"
+          >GitHub ↗</a
+        >
+      </footer>
+    </main>
+    <dialog id="definition-dialog">
+      <div class="dialog-head">
+        <h2>How the metrics work</h2>
+        <button id="close-dialog" aria-label="Close definitions">×</button>
+      </div>
+      <p>
+        These definitions are supplied to the model alongside the current
+        schema.
+      </p>
+      <div id="definition-list"></div>
+    </dialog>
+  </body>
+</html>

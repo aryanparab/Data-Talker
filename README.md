@@ -12,7 +12,7 @@ The public demo uses **2,832 entirely synthetic rows across five related tables*
 - **Visible evidence.** Results, scope assumptions, executed SQL, latency, model-call counts, and token usage are shown together. The result summary formats executed values directly instead of asking another model to invent a narrative.
 - **Safe chart rendering.** The model proposes only a chart type and result-column names. The server validates them; the browser draws SVG. No model-generated Python or JavaScript is executed.
 - **Explicit verified examples.** Four reviewed queries run without model calls. They are clearly labeled and remain useful when the provider is unavailable or the public allowance is reached. Live questions are never silently replaced with canned answers.
-- **Follow-up context.** Up to six recent question/SQL pairs are held in browser session storage and supplied to the planner. Clear session removes that context; reloading clears the displayed conversation.
+- **Follow-up context.** Up to six recent question/SQL pairs are held in browser session storage and supplied to the planner. Uncheck “Continue the previous query” to start an independent question. Grouped follow-ups are checked for accidental collapse into a scalar. Clear session removes that context; reloading clears the displayed conversation.
 
 ## Run locally
 
@@ -47,7 +47,7 @@ The planner can repair a rejected query once. It cannot change the database. The
 
 The root `Dockerfile` builds one service containing both the API and static frontend. `.dockerignore` allows only the new runtime, frontend, and pinned runtime dependencies into the build context. The synthetic database is generated during the build and the server runs as a non-root user.
 
-1. Create a Render Web Service from this repository's `main` branch.
+1. Create a Render Web Service from this repository's `deploy/public-demo` release branch (or `main` after merging the release PR).
 2. Select **Docker** and **Free**. Leave the root directory blank.
 3. Add `GROQ_API_KEY` as a protected environment variable. Optional: `GROQ_MODEL` and `DAILY_MODEL_CALLS`.
 4. Set the health-check path to `/api/health`. Deploy.
@@ -64,7 +64,7 @@ python -m unittest discover -s tests -v
 python -m tests.live_eval http://localhost:8070
 ```
 
-The 17-test offline suite checks independently aggregated reference results for all four examples, SQL rejection cases, worker timeout, row limits, chart validation, CTE/window support, and ambiguous names. The opt-in live evaluator compares generated SQL results with reference queries and checks follow-up context. Its report goes to `/tmp/data-talker-live-eval.json`; it is a small regression set, not a general accuracy benchmark.
+The 18-test offline suite checks independently aggregated reference results for all four examples, SQL rejection cases, worker timeout, row limits, chart validation, CTE/window support, and ambiguous names. The opt-in live evaluator compares generated SQL results with reference queries and checks follow-up context. Its report goes to `/tmp/data-talker-live-eval.json`; it is a small regression set, not a general accuracy benchmark.
 
 ## Limits and privacy
 
