@@ -208,7 +208,11 @@ async function run(question, example) {
     render(data);
     $("#question").value = "";
   } catch (e) {
-    statusError(e.message || "Connection interrupted. Please try again.");
+    statusError(
+      e instanceof TypeError
+        ? "Connection interrupted. Please retry in a moment; the free service may be waking up."
+        : e.message || "The request could not be completed. Please try again.",
+    );
   } finally {
     loading.remove();
     setBusy(false);

@@ -105,7 +105,7 @@ def validate(sql, tables):
     return tree.sql(dialect="duckdb")
 
 
-def execute(sql, path, tables, timeout=8):
+def execute(sql, path, tables, timeout=20):
     safe = validate(sql, tables)
     # Do not pass model keys, platform credentials, or the parent's environment.
     env = {
@@ -113,6 +113,7 @@ def execute(sql, path, tables, timeout=8):
         for k in ("PATH", "SYSTEMROOT", "LANG", "LC_ALL")
         if k in os.environ
     }
+    env.update(OPENBLAS_NUM_THREADS="1", OMP_NUM_THREADS="1", MKL_NUM_THREADS="1")
     proc = subprocess.run(
         [sys.executable, "-m", "datatalker.query_worker"],
         input=json.dumps({"sql": safe, "path": str(path)}),

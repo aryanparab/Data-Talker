@@ -1,5 +1,7 @@
 # Data Talker
 
+[Live demo](https://data-talker-demo.onrender.com) · [Release source](https://github.com/aryanparab/Data-Talker/tree/deploy/public-demo)
+
 A conversational analytics workspace that turns questions into inspectable SQL, result tables, and charts. Ask a question, refine it in a follow-up, and check exactly how the answer was calculated.
 
 The public demo uses **2,832 entirely synthetic rows across five related tables**: sales representatives, orders, eligibility periods, bonus thresholds, and commissions. No case-study workbook or original database is included in the deployment image.
@@ -8,7 +10,7 @@ The public demo uses **2,832 entirely synthetic rows across five related tables*
 
 - **Live catalog grounding.** The planner receives actual column types, row counts, declared foreign keys, and a separate metric contract. Dataset-specific rules and example queries live in `datatalker/demo.py`, not the system prompt. There are no question-to-answer keyword shortcuts.
 - **Clarification before guessing.** Ambiguous agent names are checked against real manager/agency contexts. The app asks you to include the context, rather than silently choosing one.
-- **An execution boundary.** SQLGlot validates one SELECT query against allowed tables and functions. DuckDB opens read-only in a separate process with external access and extension loading disabled, a 128 MB engine memory limit, a six-second CPU limit, and an eight-second wall-clock timeout. Results are capped at 200 rows and about 200 KB.
+- **An execution boundary.** SQLGlot validates one SELECT query against allowed tables and functions. DuckDB opens read-only in a separate process with external access and extension loading disabled, a 128 MB engine memory limit, a six-second CPU limit, and a twenty-second wall-clock timeout. Results are capped at 200 rows and about 200 KB.
 - **Visible evidence.** Results, scope assumptions, executed SQL, latency, model-call counts, and token usage are shown together. The result summary formats executed values directly instead of asking another model to invent a narrative.
 - **Safe chart rendering.** The model proposes only a chart type and result-column names. The server validates them; the browser draws SVG. No model-generated Python or JavaScript is executed.
 - **Explicit verified examples.** Four reviewed queries run without model calls. They are clearly labeled and remain useful when the provider is unavailable or the public allowance is reached. Live questions are never silently replaced with canned answers.
