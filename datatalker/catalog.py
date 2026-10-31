@@ -13,6 +13,7 @@ class Catalog:
         self.path = Path(path).resolve()
         self.contract = json.loads(Path(contract_path).read_text())
         self.tables = {}
+        self.previews = {}
         with self.connect() as conn:
             for (table,) in conn.execute(
                 "SELECT table_name FROM information_schema.tables WHERE table_schema='main' ORDER BY table_name"
@@ -24,6 +25,12 @@ class Catalog:
                         "SELECT COUNT(*) FROM " + ident(table)
                     ).fetchone()[0],
                 }
+                self.previews[table] = [
+                    list(row)
+                    for row in conn.execute(
+                        "SELECT * FROM " + ident(table) + " ORDER BY ALL LIMIT 5"
+                    ).fetchall()
+                ]
             self.relationships = [
                 {
                     "table": r[0],
@@ -73,6 +80,7 @@ class Catalog:
             "description": self.contract["description"],
             "provenance": self.contract["provenance"],
             "tables": self.tables,
+            "previews": self.previews,
             "relationships": self.relationships,
             "definitions": self.contract.get("definitions", []),
             "examples": [

@@ -73,3 +73,11 @@ The 18-test offline suite checks independently aggregated reference results for 
 Only synthetic data is supported by this public deployment. Live questions, recent question/SQL context, and the synthetic catalog are sent to Groq. There is no user-upload endpoint or arbitrary database connector. Query history stays in browser session storage and request bodies are not explicitly logged by this app.
 
 Read-only mode, validation, subprocess limits, and a container are defense in depth, not a complete sandbox for hostile SQL or sensitive tenant isolation. AI-generated SQL can still be semantically wrong; review the visible SQL and metric assumptions. Do not connect private production data without authentication, authorization, stronger workload isolation, and durable quotas.
+
+## Explore the dataset
+
+The landing page and analytics workspace show the five actual table names, column names, row counts, and five sample rows per table. These previews come from the generated DuckDB database, use a deterministic order, and require no model calls. The workspace introduction is compact so visitors can get straight to a question.
+
+- [Project overview](https://data-talker-demo.onrender.com/)
+- [Analytics workspace](https://data-talker-demo.onrender.com/app)
+- [Table previews](https://data-talker-demo.onrender.com/app#data-preview)

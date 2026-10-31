@@ -10,6 +10,8 @@
     />
     <meta name="theme-color" content="#f5f6ef" />
     <link rel="stylesheet" href="/assets/landing.css?v=2" />
+    <link rel="stylesheet" href="/assets/previews.css" />
+    <script src="/assets/previews.js" defer></script>
   </head>
   <body>
     <header class="nav wrap">
@@ -271,6 +273,19 @@
           <div class="board-foot">
             Explore the data. Read the SQL. Ask a follow-up.
           </div>
+        </div>
+      </section>
+      <section
+        class="data-preview-section"
+        id="data-preview"
+        aria-labelledby="preview-heading"
+      >
+        <div class="preview-section-head">
+          <h2 id="preview-heading">Tables in this demo</h2>
+          <p>Five sample rows from each table · synthetic data</p>
+        </div>
+        <div id="dataset-previews" aria-live="polite">
+          <p class="preview-loading">Loading table previews…</p>
         </div>
       </section>
       <section class="faq wrap">

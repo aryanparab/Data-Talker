@@ -4,10 +4,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Data Talker — Questions into evidence</title>
-    <link rel="stylesheet" href="/assets/style.css?v=2" />
+    <link rel="stylesheet" href="/assets/style.css?v=3" />
     <script src="/assets/app.js?v=2" defer></script>
+    <link rel="stylesheet" href="/assets/previews.css" />
+    <script src="/assets/previews.js" defer></script>
   </head>
-  <body>
+  <body class="workspace-page">
     <aside class="sidebar">
       <a class="brand" href="/" aria-label="Data Talker home"
         ><span class="logo">d<span>t</span></span
@@ -40,11 +42,10 @@
         >
       </header>
       <section class="intro">
-        <div class="eyebrow">CONVERSATIONAL ANALYTICS</div>
-        <h1>Ask a question.<br /><span>Follow the evidence.</span></h1>
+        <h1>Explore your data</h1>
         <p>
-          Explore sales, eligibility, and commissions in plain English.<br />See
-          the calculation, the SQL, and the data behind every answer.
+          Ask a question or try an example.
+          <a href="#data-preview">View the tables ↓</a>
         </p>
         <div class="dataset">
           <span class="dataset-symbol">▦</span>
@@ -91,6 +92,19 @@
           sent to Groq. AI can make mistakes; inspect the SQL. This free demo
           may take a moment to wake up.
         </p>
+      </section>
+      <section
+        class="data-preview-section"
+        id="data-preview"
+        aria-labelledby="preview-heading"
+      >
+        <div class="preview-section-head">
+          <h2 id="preview-heading">Tables in this demo</h2>
+          <p>Five sample rows from each table · synthetic data</p>
+        </div>
+        <div id="dataset-previews" aria-live="polite">
+          <p class="preview-loading">Loading table previews…</p>
+        </div>
       </section>
       <footer>
         <span>Built for questions that deserve more than a guess.</span

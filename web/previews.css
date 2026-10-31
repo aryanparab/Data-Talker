@@ -1,0 +1,132 @@
+.data-preview-section {
+  max-width: 1164px;
+  margin: 35px auto 65px;
+  padding: 0 24px;
+  scroll-margin-top: 28px;
+}
+.preview-section-head {
+  border-top: 1px solid #e5e5e5;
+  padding-top: 25px;
+  margin-bottom: 22px;
+}
+.preview-section-head h2 {
+  font-size: 20px;
+  letter-spacing: -0.5px;
+  font-weight: 500;
+  color: #171717;
+  margin: 0 0 9px;
+}
+.preview-section-head p,
+.preview-loading {
+  font-size: 11px;
+  line-height: 1.7;
+  color: #737373;
+}
+.sample-table-card {
+  margin: 0 0 20px;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  background: #fff;
+  overflow: hidden;
+}
+.sample-table-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e5e5e5;
+}
+.sample-table-heading h3 {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 12px;
+  letter-spacing: 0;
+  font-weight: 500;
+  margin: 0;
+  color: #7545d9;
+}
+.sample-table-heading > span {
+  font-size: 10px;
+  color: #737373;
+}
+.sample-table-scroll {
+  overflow: auto;
+}
+.sample-table-scroll table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.sample-table-scroll th,
+.sample-table-scroll td {
+  padding: 10px 16px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+  font-variant-numeric: tabular-nums;
+  color: #404040;
+}
+.sample-table-scroll th {
+  font-weight: 500;
+  background: #fafafa;
+  color: #737373;
+}
+.sample-table-scroll tr:last-child td {
+  border-bottom: 0;
+}
+.sample-table-scroll caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.sample-table-scroll:focus-visible {
+  outline: 2px solid #7545d9;
+  outline-offset: -2px;
+}
+.workspace-page main > .data-preview-section {
+  max-width: 1040px;
+  padding: 0 58px;
+}
+.workspace-page .intro h1 {
+  font-size: 30px;
+  letter-spacing: -1px;
+  margin: 0 0 12px;
+}
+.workspace-page .intro {
+  padding-top: 32px;
+}
+.workspace-page .intro > p a {
+  color: #7545d9;
+  margin-left: 10px;
+}
+.workspace-page .intro .dataset {
+  padding-top: 20px;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+}
+@media (max-width: 1000px) {
+  .workspace-page main > .data-preview-section {
+    padding: 0 30px;
+  }
+}
+@media (max-width: 720px) {
+  .workspace-page main > .data-preview-section {
+    padding: 0 22px;
+  }
+  .workspace-page .intro h1 {
+    font-size: 26px;
+  }
+  .workspace-page .intro > p a {
+    display: inline-block;
+    margin-left: 0;
+  }
+  .data-preview-section {
+    margin-bottom: 40px;
+  }
+  .sample-table-scroll th,
+  .sample-table-scroll td {
+    padding: 10px 13px;
+  }
+}
