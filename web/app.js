@@ -69,7 +69,7 @@ function plot(result) {
     min = Math.min(...rows.map((r) => r[yi]), 0),
     range = max - min || 1,
     zero = 185 - ((0 - min) / range) * 155;
-  make("line", { x1: 55, y1: zero, x2: 685, y2: zero, stroke: "#dde5d4" });
+  make("line", { x1: 55, y1: zero, x2: 685, y2: zero, stroke: "#e5e5e5" });
   make("text", { x: 48, y: 20, "text-anchor": "end" }, format(max));
   make("text", { x: 48, y: 194, "text-anchor": "end" }, "0");
   const step = 620 / rows.length;
@@ -85,9 +85,9 @@ function plot(result) {
         width: step * 0.64,
         height: Math.abs(zero - py),
         rx: 3,
-        fill: "#93ae7d",
+        fill: "#262626",
       });
-    else make("circle", { cx: px, cy: py, r: 3.5, fill: "#6d8d55" });
+    else make("circle", { cx: px, cy: py, r: 3.5, fill: "#7545d9" });
     if (rows.length <= 8 || i % Math.ceil(rows.length / 6) === 0)
       make(
         "text",
@@ -99,7 +99,7 @@ function plot(result) {
     make("polyline", {
       points: points.join(" "),
       fill: "none",
-      stroke: "#789d5e",
+      stroke: "#7545d9",
       "stroke-width": 2,
     });
   const wrap = el("div", "chart");
