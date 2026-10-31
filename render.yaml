@@ -1,6 +1,7 @@
 services:
   - type: web
     name: data-talker-demo
+    branch: prod
     runtime: docker
     plan: free
     region: oregon

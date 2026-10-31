@@ -1,6 +1,6 @@
 # Data Talker
 
-[Live demo](https://data-talker-demo.onrender.com) · [Release source](https://github.com/aryanparab/Data-Talker/tree/deploy/public-demo)
+[Live demo](https://data-talker-demo.onrender.com) · [Release source](https://github.com/aryanparab/Data-Talker/tree/prod)
 
 A conversational analytics workspace that turns questions into inspectable SQL, result tables, and charts. Ask a question, refine it in a follow-up, and check exactly how the answer was calculated.
 
@@ -49,7 +49,7 @@ The planner can repair a rejected query once. It cannot change the database. The
 
 The root `Dockerfile` builds one service containing both the API and static frontend. `.dockerignore` allows only the new runtime, frontend, and pinned runtime dependencies into the build context. The synthetic database is generated during the build and the server runs as a non-root user.
 
-1. Create a Render Web Service from this repository's `deploy/public-demo` release branch (or `main` after merging the release PR).
+1. Create a Render Web Service from this repository's `prod` branch.
 2. Select **Docker** and **Free**. Leave the root directory blank.
 3. Add `GROQ_API_KEY` as a protected environment variable. Optional: `GROQ_MODEL` and `DAILY_MODEL_CALLS`.
 4. Set the health-check path to `/api/health`. Deploy.
